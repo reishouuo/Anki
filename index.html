@@ -171,7 +171,6 @@
             cursor: pointer;
         }
 
-        /* カード・タイピングスタイル */
         .flashcard-wrapper {
             flex: 1;
             display: flex;
@@ -308,7 +307,6 @@
             margin-bottom: 12px;
         }
 
-        /* ボトムナビ */
         .bottom-nav {
             position: absolute;
             bottom: 0;
@@ -527,7 +525,7 @@
         });
     };
 
-    // AIスキャン処理 (Groq API - 最新サポートモデルを使用)
+    // AIスキャン処理 (Groq API - サポートモデル `llama-3.2-11b-vision-instant` に修正)
     const imageInput = document.getElementById('imageInput');
     const uploadArea = document.getElementById('uploadArea');
 
@@ -557,9 +555,9 @@
                 [{"word": "apple", "meaning": "りんご"}, {"word": "book", "meaning": "本"}]
             `;
 
-            // 最新のサポートVisionモデルを指定
+            // サポート対象モデル llama-3.2-11b-vision-instant を指定
             const requestBody = {
-                model: "llama-3.2-90b-vision-preview",
+                model: "llama-3.2-11b-vision-instant",
                 messages: [
                     {
                         role: "user",
