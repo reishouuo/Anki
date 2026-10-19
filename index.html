@@ -3,26 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Smart Vocab</title>
-    
-    <script>
-        window.onerror = function(msg, url, line) { alert("エラー:\n" + msg + "\n行: " + line); return false; };
-    </script>
-
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+    <title>Smart Vocab Pro</title>
     <style>
         :root {
-            --primary: #111827;
-            --bg-color: #f9fafb;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --bg-color: #f3f4f6;
             --surface: #ffffff;
-            --text-main: #1f2937;
+            --text-main: #111827;
             --text-sub: #6b7280;
             --border: #e5e7eb;
-            --success: #059669;
-            --danger: #dc2626;
-            --nav-height: 60px;
+            --success: #10b981;
+            --danger: #ef4444;
+            --nav-height: 65px;
         }
 
         * {
@@ -62,18 +55,10 @@
         }
 
         header h1 {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1.2rem;
+            font-weight: 800;
             color: var(--primary);
-            letter-spacing: -0.01em;
-        }
-
-        .header-actions button {
-            background: none;
-            border: none;
-            color: var(--text-sub);
-            font-size: 0.85rem;
-            cursor: pointer;
+            letter-spacing: -0.02em;
         }
 
         .view-container {
@@ -82,725 +67,429 @@
             padding: 20px 20px calc(var(--nav-height) + 20px);
         }
 
-        .view { display: none; height: 100%; }
-        .view.active { display: flex; flex-direction: column; }
+        .view { display: none; height: 100%; flex-direction: column; gap: 20px; }
+        .view.active { display: flex; }
 
-        .api-key-box {
+        /* ホーム画面用UI */
+        .dashboard-card {
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 16px;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin: 10px 0;
         }
 
-        .api-key-box label {
-            font-size: 0.75rem;
+        .stat-label {
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--text-sub);
-            display: block;
-            margin-bottom: 6px;
         }
 
-        .api-key-input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .api-key-input-group input, .api-key-input-group select {
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.85rem;
-            background: var(--surface);
-            color: var(--text-main);
-        }
-
-        .api-key-input-group input { flex: 1; }
-
-        .api-key-input-group button {
-            padding: 8px 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .upload-area {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            display: block;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .upload-area.disabled { opacity: 0.5; pointer-events: none; }
-        .upload-area input[type="file"] {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer; display: block;
-        }
-
-        .upload-btn {
-            background: var(--primary);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 6px;
-            pointer-events: none;
-        }
-
-        .status-box {
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-            margin-bottom: 16px;
-            min-height: 20px;
-            font-weight: 500;
-            word-break: break-all;
-        }
-
-        .word-list { display: flex; flex-direction: column; gap: 8px; }
-
-        .word-item {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
 
-        .word-item-left {
-            flex: 1;
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: var(--primary);
-            word-wrap: break-word;
-        }
-
-        .word-item-right { flex: 1.5; }
-
-        .word-item-right input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 0.9rem;
-            color: var(--text-sub);
-        }
-
-        .word-item-right input:focus {
-            outline: none;
-            color: var(--primary);
-            border-bottom: 1px solid var(--primary);
-        }
-
-        .btn-speak, .btn-delete {
-            background: none;
-            border: none;
-            font-size: 0.8rem;
-            padding: 4px 6px;
-            color: var(--text-sub);
+        .action-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 20px 16px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
         }
 
-        .flashcard-wrapper {
-            flex: 1;
+        .action-card:active { border-color: var(--primary); transform: scale(0.98); }
+        .action-card .icon { font-size: 2rem; margin-bottom: 8px; }
+        .action-card .title { font-weight: 700; font-size: 0.95rem; }
+
+        /* 入力フォーム */
+        .add-word-form {
+            background: var(--surface);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            perspective: 1000px;
+            gap: 12px;
         }
 
-        .flashcard {
-            width: 100%;
-            max-width: 360px;
-            height: 300px;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.4s;
-            cursor: pointer;
-        }
-
-        .flashcard.flipped { transform: rotateX(180deg); }
-
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+        .input-group {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 700;
+            gap: 10px;
         }
 
-        .card-back {
-            transform: rotateX(180deg);
-            color: var(--text-sub);
-            font-size: 1.6rem;
-        }
-
-        .speaker-btn-card {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            font-size: 0.75rem;
-            color: var(--text-sub);
-            border: 1px solid var(--border);
-            padding: 4px 8px;
-            border-radius: 4px;
-            z-index: 2;
-            background: var(--surface);
-        }
-
-        .card-controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 32px;
-            width: 100%;
-        }
-
-        .card-btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            width: 48px;
-            height: 48px;
-            border-radius: 24px;
-            font-size: 1rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-
-        .card-progress { margin-top: 16px; font-size: 0.8rem; color: var(--text-sub); }
-
-        .typing-container {
+        .input-group input {
             flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .typing-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            width: 100%;
-            border-radius: 12px;
-            padding: 32px 20px;
-            text-align: center;
-        }
-
-        .typing-question {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: var(--text-main);
-        }
-
-        .typing-input {
-            width: 100%;
             padding: 12px;
-            font-size: 1.1rem;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            text-align: center;
-            margin-bottom: 16px;
+            border-radius: 8px;
+            font-size: 1rem;
             background: var(--bg-color);
         }
 
-        .action-btn {
-            width: 100%;
-            padding: 12px;
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--surface);
+        }
+
+        .btn-add {
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
         }
 
-        .typing-feedback {
-            font-size: 1rem;
-            font-weight: 600;
-            min-height: 36px;
-            margin-bottom: 12px;
-        }
+        .btn-add:active { background: var(--primary-dark); }
 
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: var(--nav-height);
+        /* 単語リスト */
+        .word-item {
             background: var(--surface);
-            display: flex;
-            border-top: 1px solid var(--border);
-            z-index: 10;
-        }
-
-        .nav-item {
-            flex: 1;
+            border-radius: 10px;
+            padding: 16px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-            color: var(--text-sub);
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
+            gap: 12px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
 
-        .nav-item.active { color: var(--primary); border-top: 2px solid var(--primary); }
-        .empty-message { text-align: center; color: var(--text-sub); margin-top: 40px; font-size: 0.85rem; }
+        .word-text {
+            flex: 1;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+
+        .word-meaning {
+            flex: 1.5;
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-sub);
+            padding: 4px;
+        }
+
+        /* フラッシュカード & タイピング (既存UIをブラッシュアップ) */
+        .flashcard-wrapper {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; perspective: 1000px;
+        }
+        .flashcard {
+            width: 100%; max-width: 320px; height: 320px; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+        }
+        .flashcard.flipped { transform: rotateX(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: var(--surface); border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+        .card-front { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
+        .card-back { transform: rotateX(180deg); font-size: 1.8rem; font-weight: 700; color: var(--text-main); }
+        .card-controls { display: flex; justify-content: center; gap: 30px; margin-top: 40px; width: 100%; }
+        .card-btn { background: var(--surface); border: none; width: 56px; height: 56px; border-radius: 28px; font-size: 1.2rem; font-weight: bold; color: var(--text-main); box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; }
+
+        .typing-card {
+            background: var(--surface); border-radius: 16px; padding: 32px 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin: auto 0;
+        }
+        .typing-input { width: 100%; padding: 16px; font-size: 1.2rem; border: 2px solid var(--border); border-radius: 10px; text-align: center; margin: 20px 0; font-weight: bold; }
+        .typing-input:focus { border-color: var(--primary); outline: none; }
+        .action-btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+
+        /* ボトムナビ */
+        .bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: var(--surface); display: flex; border-top: 1px solid var(--border); z-index: 10; padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: none; border: none; color: var(--text-sub); font-size: 0.75rem; font-weight: 700; cursor: pointer; gap: 4px;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active::before { content: ''; position: absolute; top: 0; width: 40px; height: 3px; background: var(--primary); border-radius: 0 0 4px 4px; }
+        .empty-message { text-align: center; color: var(--text-sub); margin-top: 40px; font-weight: 600; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <header>
-        <h1>Smart Vocab</h1>
-        <div class="header-actions">
-            <button id="clearBtn">すべて削除</button>
-        </div>
+        <h1>Smart Vocab Pro</h1>
     </header>
 
     <div class="view-container">
-        <!-- 1. 単語一覧 -->
-        <div id="viewList" class="view active">
-            <div class="api-key-box">
-                <label for="openRouterKey">OpenRouter API Key</label>
-                <div class="api-key-input-group">
-                    <input type="password" id="openRouterKey" placeholder="sk-or-v1-...">
-                    <button id="saveKeyBtn">保存</button>
+        <!-- 1. ホーム画面 -->
+        <div id="viewHome" class="view active">
+            <div class="dashboard-card">
+                <div class="stat-label">登録済みの単語数</div>
+                <div class="stat-number" id="homeTotalWords">0</div>
+                <div class="stat-label">語</div>
+            </div>
+            
+            <div class="action-grid">
+                <div class="action-card" onclick="switchTab('viewCard')">
+                    <div class="icon">🃏</div>
+                    <div class="title">カードで暗記</div>
                 </div>
-                <div class="api-key-input-group">
-                    <select id="modelSelect" style="width: 100%;">
-                        <option value="qwen/qwen-2.5-vl-72b-instruct:free">Qwen 2.5 Vision (無料・超高精度)</option>
-                        <option value="meta-llama/llama-3.2-11b-vision-instruct:free">Llama 3.2 Vision (無料)</option>
-                        <option value="nvidia/nemotron-3.5-super-vl:free">Nemotron Vision (無料)</option>
-                    </select>
+                <div class="action-card" onclick="switchTab('viewTyping')">
+                    <div class="icon">⌨️</div>
+                    <div class="title">タイピングテスト</div>
                 </div>
             </div>
-
-            <label class="upload-area" id="uploadArea">
-                <span class="upload-btn">AIで高精度スキャン</span>
-                <p style="font-size: 0.75rem; color: var(--text-sub); margin-top: 6px;">タップしてファイルを選択</p>
-                <input type="file" id="imageInput" accept="image/*">
-            </label>
-            <div id="statusBox" class="status-box">画像を選択してください</div>
-            <div id="wordList" class="word-list"></div>
         </div>
 
-        <!-- 2. カードビュー -->
+        <!-- 2. 単語リスト＆追加画面 -->
+        <div id="viewList" class="view">
+            <div class="add-word-form">
+                <div class="input-group">
+                    <input type="text" id="inputWord" placeholder="英単語 (例: apple)" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="inputMeaning" placeholder="日本語訳 (例: りんご)" autocomplete="off">
+                </div>
+                <button class="btn-add" id="addWordBtn">単語を登録</button>
+            </div>
+            <div id="wordListContainer"></div>
+        </div>
+
+        <!-- 3. カードビュー -->
         <div id="viewCard" class="view">
             <div id="cardArea" class="flashcard-wrapper" style="display: none;">
+                <div style="font-weight: 700; color: var(--text-sub); margin-bottom: 20px;" id="cardProgress"></div>
                 <div class="flashcard" id="flashcard">
                     <div class="card-face card-front">
-                        <button class="speaker-btn-card" id="cardSpeakBtn">音声</button>
-                        <span id="cardFront"></span>
+                        <div id="cardFront"></div>
                     </div>
-                    <div class="card-face card-back" id="cardBack"></div>
+                    <div class="card-face card-back">
+                        <div id="cardBack"></div>
+                    </div>
                 </div>
                 <div class="card-controls">
-                    <button class="card-btn" id="btnPrev">&lt;</button>
-                    <button class="card-btn" id="btnNext">&gt;</button>
+                    <button class="card-btn" id="btnPrev">←</button>
+                    <button class="card-btn" onclick="speakCurrentWord()">🔊</button>
+                    <button class="card-btn" id="btnNext">→</button>
                 </div>
-                <div class="card-progress" id="cardProgress"></div>
             </div>
-            <div id="cardEmpty" class="empty-message">単語が登録されていません</div>
+            <div id="cardEmpty" class="empty-message">単語を登録してね！</div>
         </div>
 
-        <!-- 3. タイピングビュー -->
+        <!-- 4. タイピングビュー -->
         <div id="viewTyping" class="view">
-            <div id="typingArea" class="typing-container" style="display: none;">
-                <div class="typing-card">
-                    <div id="typingProgress" style="color: var(--text-sub); font-size: 0.8rem; margin-bottom: 12px;"></div>
-                    <div class="typing-question" id="typingQuestion"></div>
-                    <div class="typing-feedback" id="typingFeedback"></div>
-                    <input type="text" id="typingInput" class="typing-input" placeholder="英語を入力" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
-                    <button class="action-btn" id="typingActionBtn">回答</button>
-                </div>
+            <div id="typingArea" class="typing-card" style="display: none;">
+                <div id="typingProgress" style="color: var(--text-sub); font-weight: 700; margin-bottom: 16px;"></div>
+                <div style="font-size: 1.5rem; font-weight: 800; margin-bottom: 10px;" id="typingQuestion"></div>
+                <div id="typingFeedback" style="font-size: 1.1rem; font-weight: 700; height: 24px; margin-bottom: 10px;"></div>
+                <input type="text" id="typingInput" class="typing-input" placeholder="英語を入力" autocomplete="off" autocapitalize="none">
+                <button class="action-btn" id="typingActionBtn">答える</button>
             </div>
-            <div id="typingEmpty" class="empty-message">単語が登録されていません</div>
+            <div id="typingEmpty" class="empty-message">単語を登録してね！</div>
         </div>
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" data-target="viewList">単語帳</button>
-        <button class="nav-item" data-target="viewCard">カード</button>
-        <button class="nav-item" data-target="viewTyping">テスト</button>
+        <button class="nav-item active" data-target="viewHome">🏠<br>ホーム</button>
+        <button class="nav-item" data-target="viewList">📝<br>リスト</button>
+        <button class="nav-item" data-target="viewCard">🃏<br>カード</button>
+        <button class="nav-item" data-target="viewTyping">⌨️<br>テスト</button>
     </nav>
 </div>
 
 <script>
-    // Supabaseの設定
-    let supabaseClient = null;
-    let isSupabaseConfigured = false;
-    try {
-        const SUPABASE_URL = 'https://cdycrnfhuxjjfmwbghua.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkeWNybmZodXhqamZtd2JnaHVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIzMjYyNTYsImV4cCI6MjEwNzkwMjI1Nn0.mOZLmGEUqMVfo6IBDqFSxZjDL98eoJp25aE5tfQ161s';
-        isSupabaseConfigured = SUPABASE_URL.startsWith('http') && !SUPABASE_URL.includes('YOUR_SUPABASE_URL');
-        if (isSupabaseConfigured && window.supabase) {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-    } catch(err) {}
+    let words = JSON.parse(localStorage.getItem('vocab_words_pro') || '[]');
 
-    let words = [];
-    const statusBox = document.getElementById('statusBox');
-    const wordListEl = document.getElementById('wordList');
-    const openRouterKeyInput = document.getElementById('openRouterKey');
-    const modelSelect = document.getElementById('modelSelect');
-    const saveKeyBtn = document.getElementById('saveKeyBtn');
-
-    // キーとモデルの保存・読み込み
-    openRouterKeyInput.value = localStorage.getItem('openrouter_api_key') || '';
-    if (localStorage.getItem('openrouter_selected_model')) {
-        modelSelect.value = localStorage.getItem('openrouter_selected_model');
-    }
-
-    saveKeyBtn.addEventListener('click', () => {
-        localStorage.setItem('openrouter_api_key', openRouterKeyInput.value.trim());
-        localStorage.setItem('openrouter_selected_model', modelSelect.value);
-        alert('API設定を保存しました');
-    });
-
-    modelSelect.addEventListener('change', () => {
-        localStorage.setItem('openrouter_selected_model', modelSelect.value);
-    });
-
-    const saveLocal = () => localStorage.setItem('vocab_words', JSON.stringify(words));
-    const loadLocal = () => JSON.parse(localStorage.getItem('vocab_words') || '[]');
-
-    const reloadWordsData = async () => {
-        words = loadLocal();
-        if (supabaseClient) {
-            try {
-                const { data, error } = await supabaseClient.from('words').select('*');
-                if (!error && data) {
-                    const map = new Map();
-                    words.forEach(w => map.set(w.word, w));
-                    data.forEach(w => map.set(w.word, w));
-                    words = Array.from(map.values());
-                    saveLocal();
-                }
-            } catch(e) {}
-        }
+    const saveWords = () => {
+        localStorage.setItem('vocab_words_pro', JSON.stringify(words));
+        updateHomeStats();
     };
 
-    const renderList = () => {
-        wordListEl.innerHTML = '';
-        if (words.length === 0) {
-            wordListEl.innerHTML = '<div class="empty-message">登録されている単語はありません</div>';
-            return;
-        }
-
-        const uniqueWords = Array.from(new Map(words.map(item => [item.word, item])).values());
-
-        [...uniqueWords].reverse().forEach(item => {
-            const el = document.createElement('div');
-            el.className = 'word-item';
-
-            const left = document.createElement('div');
-            left.className = 'word-item-left';
-            left.textContent = item.word;
-
-            const right = document.createElement('div');
-            right.className = 'word-item-right';
-            const input = document.createElement('input');
-            input.value = item.meaning;
-
-            input.addEventListener('change', async (e) => {
-                item.meaning = e.target.value.trim();
-                saveLocal();
-                if (supabaseClient) {
-                    await supabaseClient.from('words').upsert([{ word: item.word, meaning: item.meaning }], { onConflict: 'word' }).catch(()=>{});
-                }
-            });
-
-            right.appendChild(input);
-            el.appendChild(left);
-            el.appendChild(right);
-
-            const speakBtn = document.createElement('button');
-            speakBtn.className = 'btn-speak';
-            speakBtn.textContent = '音声';
-            speakBtn.onclick = () => speakWord(item.word);
-            el.appendChild(speakBtn);
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'btn-delete';
-            delBtn.textContent = '削除';
-            delBtn.onclick = async () => {
-                words = words.filter(w => w.word !== item.word);
-                saveLocal();
-                renderList();
-                if (supabaseClient) {
-                    await supabaseClient.from('words').delete().eq('word', item.word).catch(()=>{});
-                }
-            };
-            el.appendChild(delBtn);
-            wordListEl.appendChild(el);
-        });
-    };
-
+    // 音声読み上げ
     const speakWord = (text) => {
         if (!window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
+        utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
     };
 
-    // 画像の軽量化処理
-    const prepareImageBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const objectUrl = URL.createObjectURL(file);
-            img.onload = () => {
-                URL.revokeObjectURL(objectUrl);
-                const MAX_SIZE = 800;
-                let width = img.width, height = img.height;
-                if (width > MAX_SIZE || height > MAX_SIZE) {
-                    if (width > height) { height = Math.round(height * (MAX_SIZE / width)); width = MAX_SIZE; }
-                    else { width = Math.round(width * (MAX_SIZE / height)); height = MAX_SIZE; }
-                }
-                const canvas = document.createElement('canvas');
-                canvas.width = width; canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.8));
-            };
-            img.onerror = () => reject("画像の読み込みに失敗しました");
-            img.src = objectUrl;
+    // 画面切り替えロジック
+    const switchTab = (targetId) => {
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-target') === targetId);
         });
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(targetId).classList.add('active');
+
+        if (targetId === 'viewHome') updateHomeStats();
+        if (targetId === 'viewList') renderList();
+        if (targetId === 'viewCard') initCardMode();
+        if (targetId === 'viewTyping') initTypingMode();
     };
 
-    // 番号・丸数字等のカット処理
-    const cleanExtractedText = (text) => {
-        return String(text)
-            .replace(/^[\s\d\.\-\(\)\[\]①-⑳❶-⓴]+/g, '')
-            .trim();
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.getAttribute('data-target')));
+    });
+
+    // --- ホーム画面 ---
+    const updateHomeStats = () => {
+        document.getElementById('homeTotalWords').textContent = words.length;
     };
 
-    // AIスキャン処理
-    const imageInput = document.getElementById('imageInput');
-    const uploadArea = document.getElementById('uploadArea');
+    // --- 単語追加 & リスト画面 ---
+    const inputWord = document.getElementById('inputWord');
+    const inputMeaning = document.getElementById('inputMeaning');
+    
+    document.getElementById('addWordBtn').addEventListener('click', () => {
+        const w = inputWord.value.trim().toLowerCase();
+        const m = inputMeaning.value.trim();
+        if (!w || !m) return alert('英単語と日本語訳の両方を入力してね。');
+        
+        // 既存の単語があれば上書き、なければ追加
+        const existingIndex = words.findIndex(item => item.word === w);
+        if (existingIndex >= 0) words[existingIndex].meaning = m;
+        else words.unshift({ word: w, meaning: m });
 
-    imageInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        inputWord.value = ''; inputMeaning.value = '';
+        inputWord.focus();
+        saveWords();
+        renderList();
+    });
 
-        const apiKey = localStorage.getItem('openrouter_api_key') || openRouterKeyInput.value.trim();
-        if (!apiKey) {
-            alert('OpenRouter APIキーを入力して保存してください。');
-            imageInput.value = '';
+    const renderList = () => {
+        const container = document.getElementById('wordListContainer');
+        container.innerHTML = '';
+        if (words.length === 0) {
+            container.innerHTML = '<div class="empty-message">まだ単語がありません。上から登録してね。</div>';
             return;
         }
 
-        const selectedModel = modelSelect.value;
-        uploadArea.classList.add('disabled');
-        statusBox.style.color = 'var(--text-main)';
-        statusBox.textContent = 'AIで解析中...';
-
-        try {
-            const dataUrl = await prepareImageBase64(file);
-
-            const prompt = `Extract all English words and their Japanese meanings from this image.
-Rules:
-1. Completely ignore numbers, bullet points, circles (like ①), or indices.
-2. English words must be in lowercase.
-3. Output ONLY a valid JSON array matching this exact format, with no markdown code blocks:
-[{"word": "apple", "meaning": "りんご"}, {"word": "book", "meaning": "本"}]`;
-
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${apiKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: selectedModel,
-                    messages: [
-                        {
-                            role: "user",
-                            content: [
-                                { type: "text", text: prompt },
-                                { type: "image_url", image_url: { url: dataUrl } }
-                            ]
-                        }
-                    ],
-                    temperature: 0.1
-                })
-            });
-
-            if (!response.ok) {
-                const errJson = await response.json().catch(() => ({}));
-                throw new Error(`APIエラー (${response.status}): ${errJson.error?.message || '通信失敗'}`);
-            }
-
-            statusBox.textContent = '単語データを整頓中...';
-            const resData = await response.json();
-            const content = resData.choices[0].message.content;
-
-            let parsedWords = [];
-            const jsonMatch = content.match(/\[[\s\S]*\]/);
-            if (jsonMatch) {
-                parsedWords = JSON.parse(jsonMatch[0]);
-            } else {
-                parsedWords = JSON.parse(content);
-            }
-
-            if (parsedWords && Array.isArray(parsedWords) && parsedWords.length > 0) {
-                const formattedWords = parsedWords.map(w => ({
-                    word: cleanExtractedText(w.word).toLowerCase(),
-                    meaning: cleanExtractedText(w.meaning)
-                })).filter(w => w.word.length > 0);
-
-                words = [...words, ...formattedWords];
-                saveLocal();
-                renderList();
-
-                statusBox.style.color = 'var(--success)';
-                statusBox.textContent = `${formattedWords.length} 個の単語を追加しました`;
-
-                if (supabaseClient) {
-                    try { await supabaseClient.from('words').upsert(formattedWords, { onConflict: 'word' }); }
-                    catch(err) { console.error("クラウド保存エラー", err); }
-                }
-            } else {
-                statusBox.style.color = 'var(--danger)';
-                statusBox.textContent = '単語が検出されませんでした';
-            }
-
-            imageInput.value = '';
-
-        } catch (error) {
-            statusBox.style.color = 'var(--danger)';
-            statusBox.textContent = '解析エラー: ' + error.message;
-        } finally {
-            uploadArea.classList.remove('disabled');
-        }
-    });
-
-    document.getElementById('clearBtn').addEventListener('click', async () => {
-        if(confirm('すべての単語を削除しますか？')) {
-            words = [];
-            saveLocal();
-            renderList();
-            if (supabaseClient) {
-                await supabaseClient.from('words').delete().neq('word', '').catch(()=>{});
-            }
-            statusBox.textContent = '削除が完了しました';
-        }
-    });
-
-    // ナビゲーション切り替え
-    document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            const targetId = btn.getAttribute('data-target');
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(targetId).classList.add('active');
-
-            await reloadWordsData();
-            if (targetId === 'viewList') renderList();
-            if (targetId === 'viewCard') initCardMode();
-            if (targetId === 'viewTyping') initTypingMode();
+        words.forEach((item, index) => {
+            const el = document.createElement('div');
+            el.className = 'word-item';
+            el.innerHTML = `
+                <div class="word-text">${item.word}</div>
+                <div class="word-meaning">${item.meaning}</div>
+                <button class="btn-icon" onclick="speakWord('${item.word}')">🔊</button>
+                <button class="btn-icon" onclick="deleteWord(${index})" style="color: var(--danger);">🗑️</button>
+            `;
+            container.appendChild(el);
         });
-    });
+    };
 
-    // カードモード
-    let cardIndex = 0; let isCardAnimating = false;
+    window.deleteWord = (index) => {
+        if (confirm('この単語を削除する？')) {
+            words.splice(index, 1);
+            saveWords();
+            renderList();
+        }
+    };
+
+    // --- カードモード ---
+    let cardIndex = 0;
     const flashcard = document.getElementById('flashcard');
-    const cardFront = document.getElementById('cardFront');
-    const cardBack = document.getElementById('cardBack');
-    const cardProgress = document.getElementById('cardProgress');
-    const cardSpeakBtn = document.getElementById('cardSpeakBtn');
-
+    
     const initCardMode = () => {
         if(words.length === 0) { document.getElementById('cardArea').style.display = 'none'; document.getElementById('cardEmpty').style.display = 'block'; return; }
         document.getElementById('cardArea').style.display = 'flex'; document.getElementById('cardEmpty').style.display = 'none';
-        cardIndex = 0; isCardAnimating = false; flashcard.classList.remove('flipped'); updateCard();
+        cardIndex = 0; flashcard.classList.remove('flipped'); updateCard();
     };
+
     const updateCard = () => {
-        const item = words[cardIndex]; cardFront.textContent = item.word; cardBack.textContent = item.meaning; cardProgress.textContent = `${cardIndex + 1} / ${words.length}`;
+        document.getElementById('cardFront').textContent = words[cardIndex].word;
+        document.getElementById('cardBack').textContent = words[cardIndex].meaning;
+        document.getElementById('cardProgress').textContent = `${cardIndex + 1} / ${words.length}`;
     };
-    cardSpeakBtn.addEventListener('click', (e) => { e.stopPropagation(); speakWord(words[cardIndex].word); });
-    flashcard.addEventListener('click', () => { if (!isCardAnimating) flashcard.classList.toggle('flipped'); });
+
+    window.speakCurrentWord = () => speakWord(words[cardIndex].word);
+    
+    flashcard.addEventListener('click', () => flashcard.classList.toggle('flipped'));
+    
     document.getElementById('btnPrev').addEventListener('click', () => {
-        if (isCardAnimating) return; isCardAnimating = true; flashcard.classList.remove('flipped');
-        setTimeout(() => { cardIndex = (cardIndex - 1 + words.length) % words.length; updateCard(); isCardAnimating = false; }, 150);
+        flashcard.classList.remove('flipped');
+        setTimeout(() => { cardIndex = (cardIndex - 1 + words.length) % words.length; updateCard(); }, 150);
     });
+    
     document.getElementById('btnNext').addEventListener('click', () => {
-        if (isCardAnimating) return; isCardAnimating = true; flashcard.classList.remove('flipped');
-        setTimeout(() => { cardIndex = (cardIndex + 1) % words.length; updateCard(); isCardAnimating = false; }, 150);
+        flashcard.classList.remove('flipped');
+        setTimeout(() => { cardIndex = (cardIndex + 1) % words.length; updateCard(); }, 150);
     });
 
-    // タイピングモード
-    let typingQueue = []; let typingIndex = 0; let typingState = 'question';
-    const typingQuestion = document.getElementById('typingQuestion'); const typingInput = document.getElementById('typingInput'); const typingFeedback = document.getElementById('typingFeedback'); const typingActionBtn = document.getElementById('typingActionBtn'); const typingProgress = document.getElementById('typingProgress');
-
+    // --- タイピングモード ---
+    let typeQueue = []; let typeIdx = 0; let typeState = 'q';
+    
     const initTypingMode = () => {
         if(words.length === 0) { document.getElementById('typingArea').style.display = 'none'; document.getElementById('typingEmpty').style.display = 'block'; return; }
-        document.getElementById('typingArea').style.display = 'flex'; document.getElementById('typingEmpty').style.display = 'none';
-        typingQueue = [...words].sort(() => Math.random() - 0.5); typingIndex = 0; nextTypingQuestion();
+        document.getElementById('typingArea').style.display = 'block'; document.getElementById('typingEmpty').style.display = 'none';
+        typeQueue = [...words].sort(() => Math.random() - 0.5); typeIdx = 0; nextTypeQ();
     };
-    const nextTypingQuestion = () => {
-        if (typingIndex >= typingQueue.length) {
-            typingQuestion.textContent = 'テスト完了'; typingInput.style.display = 'none'; typingFeedback.innerHTML = ''; typingActionBtn.textContent = 'もう一度'; typingActionBtn.style.background = 'var(--primary)'; typingState = 'finished'; typingProgress.textContent = ''; return;
-        }
-        typingState = 'question'; const item = typingQueue[typingIndex]; typingQuestion.textContent = item.meaning; typingInput.style.display = 'block'; typingInput.value = ''; typingInput.focus(); typingFeedback.innerHTML = ''; typingActionBtn.textContent = '回答'; typingActionBtn.style.background = 'var(--primary)'; typingProgress.textContent = `残り ${typingQueue.length - typingIndex} 問`;
-    };
-    const checkTypingAnswer = () => {
-        const item = typingQueue[typingIndex]; const userAnswer = typingInput.value.trim().toLowerCase(); const correctAnswer = item.word.toLowerCase();
-        typingInput.style.display = 'none';
-        if (userAnswer === correctAnswer) {
-            typingFeedback.innerHTML = `<span style="color: var(--success);">正解</span>`; typingActionBtn.textContent = '次へ'; typingActionBtn.style.background = 'var(--success)'; speakWord(item.word);
-        } else {
-            typingFeedback.innerHTML = `<span style="color: var(--danger);">不正解</span><br><span style="font-size: 0.95rem; color: var(--text-main);">正解: <b>${item.word}</b></span>`; typingActionBtn.textContent = '次へ'; typingActionBtn.style.background = 'var(--primary)'; speakWord(item.word);
-        }
-        typingState = 'answered';
-    };
-    typingActionBtn.addEventListener('click', () => {
-        if (typingState === 'question') checkTypingAnswer();
-        else if (typingState === 'answered') { typingIndex++; nextTypingQuestion(); }
-        else if (typingState === 'finished') initTypingMode();
-    });
-    typingInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && typingState === 'question') checkTypingAnswer(); });
 
-    // 初期起動
-    window.addEventListener('DOMContentLoaded', async () => {
-        await reloadWordsData();
-        renderList();
+    const nextTypeQ = () => {
+        const input = document.getElementById('typingInput');
+        const fb = document.getElementById('typingFeedback');
+        const btn = document.getElementById('typingActionBtn');
+        
+        if (typeIdx >= typeQueue.length) {
+            document.getElementById('typingQuestion').textContent = '🎉 全問終了！';
+            input.style.display = 'none'; fb.innerHTML = '';
+            btn.textContent = 'もう一度チャレンジ'; typeState = 'end';
+            document.getElementById('typingProgress').textContent = ''; return;
+        }
+        
+        typeState = 'q';
+        document.getElementById('typingQuestion').textContent = typeQueue[typeIdx].meaning;
+        input.style.display = 'block'; input.value = ''; input.focus();
+        fb.innerHTML = ''; btn.textContent = '答える'; btn.style.background = 'var(--primary)';
+        document.getElementById('typingProgress').textContent = `残り ${typeQueue.length - typeIdx} 問`;
+    };
+
+    const checkTypeAns = () => {
+        const input = document.getElementById('typingInput');
+        const fb = document.getElementById('typingFeedback');
+        const btn = document.getElementById('typingActionBtn');
+        const ans = input.value.trim().toLowerCase();
+        const correct = typeQueue[typeIdx].word.toLowerCase();
+        
+        input.style.display = 'none';
+        if (ans === correct) {
+            fb.innerHTML = `<span style="color: var(--success);">⭕ 正解！</span>`;
+            btn.textContent = '次へ'; btn.style.background = 'var(--success)';
+        } else {
+            fb.innerHTML = `<span style="color: var(--danger);">❌ 惜しい！ 正解は: ${correct}</span>`;
+            btn.textContent = '次へ'; btn.style.background = 'var(--primary)';
+        }
+        speakWord(typeQueue[typeIdx].word);
+        typeState = 'a';
+    };
+
+    document.getElementById('typingActionBtn').addEventListener('click', () => {
+        if (typeState === 'q') checkTypeAns();
+        else if (typeState === 'a') { typeIdx++; nextTypeQ(); }
+        else if (typeState === 'end') initTypingMode();
     });
+    
+    document.getElementById('typingInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && typeState === 'q') checkTypeAns();
+    });
+
+    // 初期化
+    updateHomeStats();
 </script>
 </body>
 </html>
